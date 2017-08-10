@@ -69,23 +69,19 @@ def checkValueOfCurrency(sc, currency, tick, prevVal):
 			avgLoss = sumOfLosses / timePeriod
 			rs = avgGain / avgLoss
 			rsi = 100 if rs == 0 else 100 - (100 / (1 + rs))
-			print(rsi)
-			send_email("RSI Alert", currency + "/try has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
 			if rsi >= 80:
-				send_email("Sell Alert", currency + "/try has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
+				send_email(currency + " Sell Alert", currency + " has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
 			elif rsi <= 20:
-				send_email("Buy Alert", currency + "/try has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
+				send_email(currency + " Buy Alert", currency + " has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
 	else:
 		avgGain = (avgGain * (timePeriod - 1) + currGain) / timePeriod
 		avgLoss = (avgLoss * (timePeriod - 1) + currLoss) / timePeriod
 		rs = avgGain / avgLoss
 		rsi = 100 if rs == 0 else 100 - (100 / (1 + rs))
-		print(rsi)
-		send_email("RSI Alert", currency + "/try has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
 		if rsi >= 80:
-			send_email("Sell Alert", currency + "/try has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
+			send_email(currency + " Sell Alert", currency + " has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
 		elif rsi <= 20:
-			send_email("Buy Alert", currency + "/try has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
+			send_email(currency + " Buy Alert", currency + " has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
 	currCount += 1
 	sc.enter(tick, 1, checkValueOfCurrency, (sc, currency, tick, currencyVal))
 
