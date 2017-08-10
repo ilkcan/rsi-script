@@ -1,13 +1,12 @@
-import urllib2
-import urllib
+from urllib import request
 import smtplib
 import sched, time
 import argparse
 import os
 import smtplib
 from bs4 import BeautifulSoup
-gmail_user = ''
-gmail_pwd = ''
+gmailUser = ''
+gmailPassword = ''
 firstNFlag = False
 currCount = 0
 sumOfGains = 0
@@ -17,24 +16,25 @@ avgLoss = 0
 timePeriod = 1
 
 def send_email(subject, body):
-    FROM = gmail_user
-    TO = gmail_user
-    SUBJECT = subject
-    TEXT = body
+	global gmailPassword
+	global gmailUser
+	FROM = gmailUser
+	TO = gmailUser
+	SUBJECT = subject
+	TEXT = body
+	print(gmailUser)
+	print(gmailPassword)
+	message = """From: %s\nTo: %s\nSubject: %s\n\n%s""" % (FROM, TO, SUBJECT, TEXT)
 
-    # Prepare actual message
-    message = """From: %s\nTo: %s\nSubject: %s\n\n%s
-    """ % (FROM, TO, SUBJECT, TEXT)
-    try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.ehlo()
-        server.starttls()
-        server.login(gmail_user, gmail_pwd)
-        server.sendmail(FROM, TO, message)
-        server.quit()
-        print 'successfully sent the mail'
-    except:
-        print "failed to send mail"
+	try:
+		server = smtplib.SMTP("smtp.gmail.com", 587)
+		server.ehlo()
+		server.starttls()
+		server.login(gmailUser, gmailPassword)
+		server.sendmail(FROM, TO, message)
+		server.quit()
+	except:
+		print("failed to send mail")
 
 def checkValueOfCurrency(sc, currency, tick, prevVal): 
 	global firstNFlag
@@ -46,13 +46,13 @@ def checkValueOfCurrency(sc, currency, tick, prevVal):
 
 	hdr = {	'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
 			'User-Agent' : "Magic Browser"}
-	req = urllib2.Request('https://tr.investing.com/currencies/' + currency +  '-try', headers=hdr)
-	con = urllib2.urlopen(req)
-	html = con.read()
+	req = request.Request('https://tr.investing.com/currencies/' + currency, headers=hdr)
+	resp = request.urlopen(req)
+	html = resp.read()
 	soup = BeautifulSoup(html, 'html.parser')
 	currencySpan = soup.find(id="last_last")
 	currencyVal = float(currencySpan.string.replace(",", "."))
-	print currencyVal
+	print(currencyVal)
 	currGain = 0
 	currLoss = 0
 	if currCount != 0:
@@ -71,7 +71,8 @@ def checkValueOfCurrency(sc, currency, tick, prevVal):
 			avgLoss = sumOfLosses / timePeriod
 			rs = avgGain / avgLoss
 			rsi = 100 if rs == 0 else 100 - (100 / (1 + rs))
-			print rsi
+			print(rsi)
+			send_email("RSI Alert", currency + "/try has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
 			if rsi >= 80:
 				send_email("Sell Alert", currency + "/try has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
 			elif rsi <= 20:
@@ -81,25 +82,33 @@ def checkValueOfCurrency(sc, currency, tick, prevVal):
 		avgLoss = (avgLoss * (timePeriod - 1) + currLoss) / timePeriod
 		rs = avgGain / avgLoss
 		rsi = 100 if rs == 0 else 100 - (100 / (1 + rs))
-		print rsi
+		print(rsi)
+		send_email("RSI Alert", currency + "/try has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
 		if rsi >= 80:
 			send_email("Sell Alert", currency + "/try has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
 		elif rsi <= 20:
 			send_email("Buy Alert", currency + "/try has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
 	currCount += 1
-	sc.enter(tick, 1, checkValueOfCurrency, (sc,currency,tick, currencyVal))
+	sc.enter(tick, 1, checkValueOfCurrency, (sc, currency, tick, currencyVal))
 
-def main(args):
+def main(tp, currency, fetchFrequency, gUsername, gPassword):
 	global timePeriod
+	global gmailUser
+	global gmailPassword
 	s = sched.scheduler(time.time, time.sleep)
-	timePeriod = args.tp
-	s.enter(0, 1, checkValueOfCurrency, (s, args.currency, args.tick, 0))
+	timePeriod = tp
+	gmailUser = gUsername
+	gmailPassword = gPassword
+	s.enter(0, 1, checkValueOfCurrency, (s, currency, fetchFrequency, 0))
 	s.run()
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--tp", help="the time period for which rsi will be calculated (unit is --tick seconds)", required=True, type=float)
-	parser.add_argument("--currency", help="the currency that you want to check the value of", required=True)
-	parser.add_argument("--tick", help="the time period between each fetch (seconds)", required=True, type=int)
+	parser.add_argument("--cur", help="the currency that you want to check the value of", required=True)
+	parser.add_argument("--ff", help="the time period between each fetch (seconds)", required=True, type=int)
+	parser.add_argument("--gu", help="gmail account for sending the mail", required=True)
+	parser.add_argument("--gp", help="password for the gmail account", required=True)
 	args = parser.parse_args()
-	main(args)
+	
+	main(args.tp, args.cur, args.ff, args.gu, args.gp)
