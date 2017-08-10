@@ -22,8 +22,6 @@ def send_email(subject, body):
 	TO = gmailUser
 	SUBJECT = subject
 	TEXT = body
-	print(gmailUser)
-	print(gmailPassword)
 	message = """From: %s\nTo: %s\nSubject: %s\n\n%s""" % (FROM, TO, SUBJECT, TEXT)
 
 	try:
