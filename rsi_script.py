@@ -95,6 +95,8 @@ def main(tp, currency, fetchFrequency, gUsername, gPassword):
 	timePeriod = tp
 	gmailUser = gUsername
 	gmailPassword = gPassword
+	
+	send_email(currency + " Script Status", "The script has started running!")
 	s.enter(0, 1, checkValueOfCurrency, (s, currency, fetchFrequency, 0))
 	s.run()
 
@@ -107,5 +109,4 @@ if __name__ == '__main__':
 	parser.add_argument("--gp", help="password for the gmail account", required=True)
 	args = parser.parse_args()
 	
-	send_email(args.cur + " Script Status", "The script has started running!")
 	main(args.tp, args.cur, args.ff, args.gu, args.gp)
