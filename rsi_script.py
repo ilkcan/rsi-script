@@ -3,6 +3,7 @@ import smtplib
 import sched, time
 import argparse
 import os
+from datetime import datetime
 import smtplib
 from bs4 import BeautifulSoup
 gmailUser = ''
@@ -50,7 +51,6 @@ def checkValueOfCurrency(sc, currency, tick, prevVal):
 	soup = BeautifulSoup(html, 'html.parser')
 	currencySpan = soup.find(id="last_last")
 	currencyVal = float(currencySpan.string.replace(",", "."))
-	print(currencyVal)
 	currGain = 0
 	currLoss = 0
 	if currCount != 0:
@@ -69,21 +69,23 @@ def checkValueOfCurrency(sc, currency, tick, prevVal):
 			avgLoss = sumOfLosses / timePeriod
 			rs = avgGain / avgLoss
 			rsi = 100 if rs == 0 else 100 - (100 / (1 + rs))
-			if rsi >= 80:
+			if rsi >= 70:
 				send_email(currency + " Sell Alert", currency + " has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
-			elif rsi <= 20:
+			elif rsi <= 30:
 				send_email(currency + " Buy Alert", currency + " has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
 	else:
 		avgGain = (avgGain * (timePeriod - 1) + currGain) / timePeriod
 		avgLoss = (avgLoss * (timePeriod - 1) + currLoss) / timePeriod
 		rs = avgGain / avgLoss
 		rsi = 100 if rs == 0 else 100 - (100 / (1 + rs))
-		if rsi >= 80:
+		if rsi >= 70:
 			send_email(currency + " Sell Alert", currency + " has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
-		elif rsi <= 20:
+		elif rsi <= 30:
 			send_email(currency + " Buy Alert", currency + " has an rsi value of " + str(rsi) + " with the current value of " + str(currencyVal))
 	currCount += 1
-	sc.enter(tick, 1, checkValueOfCurrency, (sc, currency, tick, currencyVal))
+	currentTime = datetime.now().time()
+	if currentTime.hour != 20:
+		sc.enter(tick, 1, checkValueOfCurrency, (sc, currency, tick, currencyVal))
 
 def main(tp, currency, fetchFrequency, gUsername, gPassword):
 	global timePeriod
@@ -105,4 +107,5 @@ if __name__ == '__main__':
 	parser.add_argument("--gp", help="password for the gmail account", required=True)
 	args = parser.parse_args()
 	
+	send_email(currency + " Script Status", "The script has started running!")
 	main(args.tp, args.cur, args.ff, args.gu, args.gp)
